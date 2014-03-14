@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# this script is inteaded to be sourced by 
+# bareos-database-common postinstall script.
+# It helps to configure dbconfig.
+
+LIB=/usr/lib/bareos/scripts/bareos-config-lib.sh
+
+if ! [ -r "$LIB" ]; then
+    echo "failed to read library $LIB" >&2
+else
+    . $LIB
+
+    #dbc_dbserver=
+    #dbc_dbport=
+    dbname=`get_database_name`
+    dbuser=`get_database_user`
+    dbpass=`get_database_password`
+fi

@@ -1,0 +1,78 @@
+#!/bin/sh
+
+set -e
+
+. /usr/share/debconf/confmodule
+
+#set -x
+#echo "bareos-database-common.config: $@" >&2
+
+if [ -r @scriptdir@/bareos-config-lib.sh ]; then
+    . @scriptdir@/bareos-config-lib.sh
+    if [ -f /usr/share/dbconfig-common/dpkg/config ]; then
+        . /usr/share/dbconfig-common/dpkg/config
+
+        dbc_debug=1
+        # prevent errors by using || true
+        dbc_dbname=`get_database_name bareos` || true
+        dbc_dbuser=`get_database_user bareos` || true
+
+        # only postgresql
+        dbc_pgsql_createdb_encoding="SQL_ASCII"
+
+        # only required for sqlite3
+        dbc_basepath=`get_working_dir`
+
+        # convert Bareos databases types into dbconfig_dbtypes
+        dbc_dbtypes=""
+        DB_INSTALLED=`get_databases_installed`
+        if echo "$DB_INSTALLED" | grep -q postgresql; then dbc_dbtypes="${dbc_dbtypes}pgsql, "; fi
+        if echo "$DB_INSTALLED" | grep -q mysql     ; then dbc_dbtypes="${dbc_dbtypes}mysql, "; fi
+        if echo "$DB_INSTALLED" | grep -q sqlite3   ; then dbc_dbtypes="${dbc_dbtypes}sqlite3, "; fi
+        # remove trailing ,
+        dbc_dbtypes=`echo ${dbc_dbtypes} | sed 's/, *$//'`
+
+        # action
+        param1="$1"
+        # $2: when action is "configure": most-recently-configured-version
+        param2="$2"
+        param2_orig=$param2
+        shift 2
+
+        # if we upgrade from an older version (param2),
+        # we do not pass the version number of the old package.
+        # Instead we pass the database version number of the old package.
+        if [ "$param2" ]; then
+            case "$param1" in
+                configure|reconfigure)
+                    param2=`get_database_version_by_release "$param2"`
+
+                    # dbconfig is available since Bareos version >= 14.1.0.
+                    # TODO: currently the database version for the first version using dbconfig
+                    #       is identical with the last version without dbconfig.
+                    #       Therefore we fake dbc_first_version:
+                    #           set it only if the update from a version without dbconfig
+                    #           and set it to database version + 1
+                    #       As soon as there is a database version 2003,
+                    #       we can always set dbc_first_version="2003"
+                    if dpkg --compare-versions "$param2_orig" lt "14.1.0"; then
+                        dbc_first_version="2003"
+                        dbc_load_include="sh:/usr/lib/bareos/scripts/set_dbconfig_vars.sh"
+                        # empty passwords require special treatment, see below
+                        dbpass=`get_database_password` || true
+                    fi
+                    ;;
+                *)
+                    ;;
+            esac
+        fi
+
+        dbc_go bareos-database-common $param1 $param2 $@
+        # workaround: if an empty mysql password is defined, explicitly set it
+        if [ ${dbpass+DEFINED} ]; then
+            if echo "$DB_INSTALLED" | grep -q mysql; then
+                db_set bareos-database-common/mysql/app-pass "$dbpass"
+            fi
+        fi
+    fi
+fi
