@@ -303,7 +303,8 @@ int main (int argc, char *argv[])
    mode = (test_config) ? CHECK_CONNECTION : UPDATE_AND_FIX;
 
    if (!check_catalog(mode)) {
-      Jmsg((JCR *)NULL, M_ERROR_TERM, 0, _("Please correct configuration file: %s\n"), configfile);
+      Jmsg((JCR *)NULL, M_ERROR_TERM, 0, _("Please correct configuration file: %s\n"
+                                " on version error, please run the db update scripts\n"), configfile);
       goto bail_out;
    }
 
