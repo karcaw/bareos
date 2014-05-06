@@ -15,5 +15,21 @@ else
     #dbc_dbport=
     dbname=`get_database_name`
     dbuser=`get_database_user`
-    dbpass=`get_database_password`
+    bareos_database_password=`get_database_password`
+    case "`get_database_driver`" in
+        postgresql)
+            dbtype="pgsql"
+            # if Bareos config password is defined, set dbpass
+            [ "$bareos_database_password" ] && dbpass="$bareos_database_password"
+            ;;
+        mysql)
+            dbtype="mysql"
+            # set dbpass, even if empty
+            dbpass="$bareos_database_password"
+            ;;
+        sqlite3
+            dbtype="sqlite3"
+            # dbpass: not required
+            ;;
+    esac
 fi
