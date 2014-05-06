@@ -115,13 +115,13 @@ bool authenticate_storage_daemon(JCR *jcr, STORERES *store)
    if (!auth_success) {
       stop_bsock_timer(tid);
       Dmsg0(dbglvl, _("Director and Storage daemon passwords or names not the same.\n"));
-      Jmsg2(jcr, M_FATAL, 0,
-            _("Director unable to authenticate with Storage daemon at \"%s:%d\". Possible causes:\n"
-            "Passwords or names not the same or\n"
-            "Maximum Concurrent Jobs exceeded on the SD or\n"
-            "SD networking messed up (restart daemon).\n"
-            "Please see " MANUAL_AUTH_URL " for help.\n"),
-            sd->host(), sd->port());
+      Jmsg(jcr, M_FATAL, 0,
+           _("Director unable to authenticate with Storage daemon at \"%s:%d\". Possible causes:\n"
+             "Passwords or names not the same or\n"
+             "Maximum Concurrent Jobs exceeded on the SD or\n"
+             "SD networking messed up (restart daemon).\n"
+             "Please see %s for help.\n"),
+           sd->host(), sd->port(), MANUAL_AUTH_URL);
       return false;
    }
 
@@ -147,9 +147,6 @@ bool authenticate_storage_daemon(JCR *jcr, STORERES *store)
     * Is TLS Enabled?
     */
    if (tls_local_need >= BNET_TLS_OK && tls_remote_need >= BNET_TLS_OK) {
-      /*
-       * Engage TLS! Full Speed Ahead!
-       */
       if (!bnet_tls_client(store->tls_ctx, sd, NULL)) {
          stop_bsock_timer(tid);
          Jmsg(jcr, M_FATAL, 0, _("TLS negotiation failed with SD at \"%s:%d\"\n"),
@@ -242,11 +239,11 @@ bool authenticate_file_daemon(JCR *jcr)
       Dmsg0(dbglvl, _("Director and File daemon passwords or names not the same.\n"));
       Jmsg(jcr, M_FATAL, 0,
             _("Unable to authenticate with File daemon at \"%s:%d\". Possible causes:\n"
-            "Passwords or names not the same or\n"
-            "Maximum Concurrent Jobs exceeded on the FD or\n"
-            "FD networking messed up (restart daemon).\n"
-            "Please see " MANUAL_AUTH_URL " for help.\n"),
-            fd->host(), fd->port());
+              "Passwords or names not the same or\n"
+              "Maximum Concurrent Jobs exceeded on the FD or\n"
+              "FD networking messed up (restart daemon).\n"
+              "Please see %s for help.\n"),
+            fd->host(), fd->port(), MANUAL_AUTH_URL);
       return false;
    }
 
@@ -274,9 +271,6 @@ bool authenticate_file_daemon(JCR *jcr)
     * Is TLS Enabled?
     */
    if (tls_local_need >= BNET_TLS_OK && tls_remote_need >= BNET_TLS_OK) {
-      /*
-       * Engage TLS! Full Speed Ahead!
-       */
       if (!bnet_tls_client(client->tls_ctx, fd, client->tls_allowed_cns)) {
          stop_bsock_timer(tid);
          Jmsg(jcr, M_FATAL, 0, _("TLS negotiation failed with FD at \"%s:%d\".\n"),
@@ -432,9 +426,6 @@ bool authenticate_user_agent(UAContext *uac)
          tls_ctx = me->tls_ctx;
       }
 
-      /*
-       * Engage TLS! Full Speed Ahead!
-       */
       if (!bnet_tls_server(tls_ctx, ua, verify_list)) {
          Emsg0(M_ERROR, 0, _("TLS negotiation failed.\n"));
          auth_success = false;
