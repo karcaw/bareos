@@ -24,11 +24,15 @@ class BareosFdPluginBaseclass:
         self.fdname = GetValue(context, bVariable['bVarFDName']);
         self.jobId = GetValue(context, bVariable['bVarJobId']);
         self.client = GetValue(context, bVariable['bVarClient']);
+        self.since = GetValue(context, bVariable['bVarSinceTime']);
         self.level = GetValue(context, bVariable['bVarLevel']);
         self.jobName = GetValue(context, bVariable['bVarJobName']);
         self.workingdir = GetValue(context, bVariable['bVarWorkingDir']);
         DebugMessage(context, 100, "FDName = " + self.fdname + " - BareosFdPluginBaseclass\n");
         DebugMessage(context, 100, "WorkingDir = " + self.workingdir + " jobId: " + str(self.jobId) + "\n");
+
+    def __str__(self):
+        return "<%s:fdname=%s jobId=%s client=%s since=%d level=%c jobName=%s workingDir=%s>"%(self.__class__,self.fdname,self.jobId,self.client,self.since,self.level,self.jobName,self.workingdir)
 
     def parse_plugin_definition(self,context, plugindef):
         DebugMessage(context, 100, "plugin def parser called with " + plugindef + "\n");
